@@ -16,7 +16,7 @@ export const CHARACTERS: CharacterExtendedDef[] = [
     elementColor: '#38bdf8',
     badgeBg: 'bg-sky-950/80 border-sky-500/40 text-sky-300',
     iconName: 'Shield',
-    imagePath: '/src/assets/images/char_knight_1791474495360.jpg',
+    imagePath: '/images/char_knight_1791474495360.jpg',
   },
   {
     id: 'mage',
@@ -29,7 +29,7 @@ export const CHARACTERS: CharacterExtendedDef[] = [
     elementColor: '#c084fc',
     badgeBg: 'bg-purple-950/80 border-purple-500/40 text-purple-300',
     iconName: 'Sparkles',
-    imagePath: '/src/assets/images/char_mage_1791474507265.jpg',
+    imagePath: '/images/char_mage_1791474507265.jpg',
   },
   {
     id: 'samurai',
@@ -42,7 +42,7 @@ export const CHARACTERS: CharacterExtendedDef[] = [
     elementColor: '#f43f5e',
     badgeBg: 'bg-rose-950/80 border-rose-500/40 text-rose-300',
     iconName: 'Zap',
-    imagePath: '/src/assets/images/char_samurai_1791474527586.jpg',
+    imagePath: '/images/char_samurai_1791474527586.jpg',
   },
   {
     id: 'robot',
@@ -55,7 +55,7 @@ export const CHARACTERS: CharacterExtendedDef[] = [
     elementColor: '#06b6d4',
     badgeBg: 'bg-cyan-950/80 border-cyan-500/40 text-cyan-300',
     iconName: 'Cpu',
-    imagePath: '/src/assets/images/char_robot_1791474540521.jpg',
+    imagePath: '/images/char_robot_1791474540521.jpg',
   },
   {
     id: 'ninja',
@@ -68,7 +68,7 @@ export const CHARACTERS: CharacterExtendedDef[] = [
     elementColor: '#10b981',
     badgeBg: 'bg-emerald-950/80 border-emerald-500/40 text-emerald-300',
     iconName: 'Eye',
-    imagePath: '/src/assets/images/char_ninja_1791474592791.jpg',
+    imagePath: '/images/char_ninja_1791474592791.jpg',
   },
   {
     id: 'pirate',
@@ -81,7 +81,7 @@ export const CHARACTERS: CharacterExtendedDef[] = [
     elementColor: '#f59e0b',
     badgeBg: 'bg-amber-950/80 border-amber-500/40 text-amber-300',
     iconName: 'Anchor',
-    imagePath: '/src/assets/images/char_pirate_1791474605337.jpg',
+    imagePath: '/images/char_pirate_1791474605337.jpg',
   },
   {
     id: 'archer',
@@ -94,7 +94,7 @@ export const CHARACTERS: CharacterExtendedDef[] = [
     elementColor: '#84cc16',
     badgeBg: 'bg-lime-950/80 border-lime-500/40 text-lime-300',
     iconName: 'Crosshair',
-    imagePath: '/src/assets/images/char_archer_1791474621162.jpg',
+    imagePath: '/images/char_archer_1791474621162.jpg',
   },
   {
     id: 'guardian',
@@ -107,6 +107,6 @@ export const CHARACTERS: CharacterExtendedDef[] = [
     elementColor: '#eab308',
     badgeBg: 'bg-yellow-950/80 border-yellow-500/40 text-yellow-300',
     iconName: 'Award',
-    imagePath: '/src/assets/images/char_guardian_1791474633943.jpg',
+    imagePath: '/images/char_guardian_1791474633943.jpg',
   },
 ];
