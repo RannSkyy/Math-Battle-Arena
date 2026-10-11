@@ -1,0 +1,6 @@
+{
+  "name": "Math Battle Arena",
+  "description": "Media Pembelajaran Matematika Berbasis Game Battle RPG untuk SMP Kelas VII, VIII, dan IX.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
