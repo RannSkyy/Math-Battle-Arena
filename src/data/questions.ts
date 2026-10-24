@@ -1,6 +1,6 @@
 import { Question, GradeLevel, QuestionCategory } from '../types/game';
 
-export const BUILT_IN_QUESTIONS: Question[] = [
+const RAW_BUILT_IN_QUESTIONS: Question[] = [
   // ==========================================
   // OPERASI HITUNG CEPAT (+, −, ×, :)
   // ==========================================
@@ -349,6 +349,42 @@ export const BUILT_IN_QUESTIONS: Question[] = [
     topic: 'Perbandingan Cepat',
   },
 ];
+
+function distributeAnswerPosition(q: Question, targetIdx: number): Question {
+  if (targetIdx === q.correctAnswerIndex) return q;
+  const newOpts = [...q.options];
+  const [correctItem] = newOpts.splice(q.correctAnswerIndex, 1);
+  newOpts.splice(targetIdx, 0, correctItem);
+  return {
+    ...q,
+    options: newOpts,
+    correctAnswerIndex: targetIdx,
+  };
+}
+
+// Built-in questions with answer indices distributed evenly across A, B, C, D (0, 1, 2, 3)
+export const BUILT_IN_QUESTIONS: Question[] = RAW_BUILT_IN_QUESTIONS.map((q, idx) =>
+  distributeAnswerPosition(q, idx % 4)
+);
+
+/**
+ * Randomize question options while ensuring correctAnswerIndex correctly tracks the right option
+ */
+export function shuffleQuestionOptions(q: Question): Question {
+  const correctText = q.options[q.correctAnswerIndex];
+  const items = q.options.map((opt, i) => ({ opt, isCorrect: i === q.correctAnswerIndex }));
+  for (let i = items.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [items[i], items[j]] = [items[j], items[i]];
+  }
+  const newOptions = items.map((x) => x.opt);
+  const newIndex = items.findIndex((x) => x.isCorrect);
+  return {
+    ...q,
+    options: newOptions,
+    correctAnswerIndex: newIndex >= 0 ? newIndex : 0,
+  };
+}
 
 /**
  * Endless Dynamic Question Generator (+, -, x, :, dan pola logika sederhana)

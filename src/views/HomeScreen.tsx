@@ -17,7 +17,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onSelectMode }) => {
           <Sparkles className="w-3.5 h-3.5 text-amber-400" />
           Pilih Mode Permainan
         </div>
-        <h2 className="text-3xl md:text-5xl font-black uppercase tracking-wide text-slate-100" style={{ fontFamily: 'var(--font-cinzel), serif' }}>
+        <h2 className="text-3xl md:text-5xl font-black uppercase tracking-wide text-slate-100" style={{ fontFamily: 'var(--font-heading), sans-serif' }}>
           Arena Pertempuran
         </h2>
         <p className="text-slate-400 text-sm mt-2">
@@ -41,7 +41,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onSelectMode }) => {
               </span>
             </div>
             
-            <h3 className="text-2xl font-black text-white tracking-wide mb-2" style={{ fontFamily: 'var(--font-cinzel), serif' }}>
+            <h3 className="text-2xl font-black text-white tracking-wide mb-2" style={{ fontFamily: 'var(--font-heading), sans-serif' }}>
               Battle Team (Kelas)
             </h3>
             <p className="text-slate-400 text-xs leading-relaxed">
@@ -80,7 +80,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onSelectMode }) => {
               </span>
             </div>
 
-            <h3 className="text-2xl font-bold text-white tracking-wide mb-2" style={{ fontFamily: 'var(--font-cinzel), serif' }}>
+            <h3 className="text-2xl font-bold text-white tracking-wide mb-2" style={{ fontFamily: 'var(--font-heading), sans-serif' }}>
               Latihan Mandiri
             </h3>
             <p className="text-slate-400 text-xs leading-relaxed">
@@ -117,16 +117,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onSelectMode }) => {
               </span>
             </div>
 
-            <h3 className="text-2xl font-bold text-white tracking-wide mb-2" style={{ fontFamily: 'var(--font-cinzel), serif' }}>
+            <h3 className="text-2xl font-bold text-white tracking-wide mb-2" style={{ fontFamily: 'var(--font-heading), sans-serif' }}>
               Dashboard Guru
             </h3>
             <p className="text-slate-400 text-xs leading-relaxed">
-              Kelola bank soal, buat soal kustom atau generate soal dengan AI Gemini, unduh laporan pertandingan kelas (CSV), dan atur konfigurasi game.
+              Kelola bank soal, tambah dan edit soal kustom, unduh laporan pertandingan kelas (CSV), serta pantau riwayat sesi belajar.
             </p>
 
             <div className="mt-4 flex flex-wrap gap-2 text-[11px] text-emerald-300/80 font-medium">
               <span>• Bank Soal Kustom</span>
-              <span>• AI Question Generator</span>
+              <span>• Tambah & Edit Soal</span>
               <span>• Laporan Hasil Belajar</span>
             </div>
           </div>
@@ -196,7 +196,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onSelectMode }) => {
               <X className="w-5 h-5" />
             </button>
 
-            <h3 className="text-2xl font-black text-amber-400 uppercase tracking-wide mb-4" style={{ fontFamily: 'var(--font-cinzel), serif' }}>
+            <h3 className="text-2xl font-black text-amber-400 uppercase tracking-wide mb-4" style={{ fontFamily: 'var(--font-heading), sans-serif' }}>
               Aturan & Mekanisme Pertempuran
             </h3>
 

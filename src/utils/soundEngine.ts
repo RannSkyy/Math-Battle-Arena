@@ -1,39 +1,182 @@
 /**
- * Procedural Web Audio API Sound Engine for Math Battle Arena
- * Pure synthesized audio: 100% offline, zero network dependencies, zero broken audio files.
+ * Sound Engine for Math Battle Arena
+ * - SFX tetap memakai Web Audio API
+ * - Menu BGM: Merry Christmas.mp3
+ * - Battle BGM: BattleCry.mp3
+ * - BGM tidak restart saat pindah menu yang sama atau saat toggle mute/unmute
  */
 
 class SoundEngine {
   private ctx: AudioContext | null = null;
-  private isMuted: boolean = false;
-  private isBgmMuted: boolean = false;
-  private masterVolume: number = 0.6;
-  private bgmInterval: number | null = null;
-  private bgmStep: number = 0;
+  private isMuted = false;
+  private isBgmMuted = false;
+  private masterVolume = 0.6;
+
+  private currentBgmMode: 'none' | 'menu' | 'battle' = 'none';
+  private bgmAudio: HTMLAudioElement | null = null;
+  private bgmLoadToken = 0;
 
   constructor() {
-    // Check saved preferences
     try {
       const savedMute = localStorage.getItem('mba_sfx_muted');
       if (savedMute !== null) this.isMuted = savedMute === 'true';
+
       const savedBgmMute = localStorage.getItem('mba_bgm_muted');
       if (savedBgmMute !== null) this.isBgmMuted = savedBgmMute === 'true';
     } catch {
-      // ignore
+      // ignore storage errors
     }
   }
 
   private initCtx(): AudioContext | null {
     if (!this.ctx && typeof window !== 'undefined') {
-      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const AudioCtx =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+
       if (AudioCtx) {
         this.ctx = new AudioCtx();
       }
     }
+
     if (this.ctx && this.ctx.state === 'suspended') {
       this.ctx.resume().catch(() => {});
     }
+
     return this.ctx;
+  }
+
+  private normalizeBasePath(base: string): string {
+    if (!base) return '/';
+    return base.endsWith('/') ? base : `${base}/`;
+  }
+
+  private getPublicSoundUrl(fileName: string): string {
+    const base = this.normalizeBasePath(import.meta.env.BASE_URL || '/');
+    const encodedFileName = fileName
+      .split('/')
+      .map((part) => encodeURIComponent(part))
+      .join('/');
+
+    return `${base}sound/${encodedFileName}`;
+  }
+
+  private stopCurrentBgmAudio(resetTime: boolean = true) {
+    if (!this.bgmAudio) return;
+
+    try {
+      this.bgmAudio.pause();
+      if (resetTime) this.bgmAudio.currentTime = 0;
+    } catch {
+      // ignore
+    }
+
+    this.bgmAudio = null;
+  }
+
+  private pauseCurrentBgm() {
+    if (!this.bgmAudio) return;
+
+    try {
+      this.bgmAudio.pause();
+    } catch {
+      // ignore
+    }
+  }
+
+  private resumeCurrentBgm() {
+    if (!this.bgmAudio || this.isBgmMuted) return;
+
+    this.bgmAudio
+      .play()
+      .catch(() => {
+        // ignore autoplay / browser resume issues
+      });
+  }
+
+  private hasLiveCurrentBgm(): boolean {
+    return !!this.bgmAudio && !this.bgmAudio.ended;
+  }
+
+  private playBgmFromFiles(fileNames: string[], volume: number, mode: 'menu' | 'battle') {
+    const requestToken = ++this.bgmLoadToken;
+
+    const tryFile = (index: number) => {
+      if (requestToken !== this.bgmLoadToken) return;
+
+      if (index >= fileNames.length) {
+        console.warn('BGM gagal diputar. Semua nama file sudah dicoba.');
+        return;
+      }
+
+      const fileName = fileNames[index];
+      const audio = new Audio(this.getPublicSoundUrl(fileName));
+      audio.loop = true;
+      audio.preload = 'auto';
+      audio.volume = volume;
+
+      const onError = () => {
+        if (requestToken !== this.bgmLoadToken) return;
+        if (this.bgmAudio === audio) {
+          this.bgmAudio = null;
+        }
+        tryFile(index + 1);
+      };
+
+      audio.addEventListener('error', onError, { once: true });
+
+      this.bgmAudio = audio;
+      this.currentBgmMode = mode;
+
+      audio
+        .play()
+        .then(() => {
+          if (requestToken !== this.bgmLoadToken) {
+            try {
+              audio.pause();
+              audio.currentTime = 0;
+            } catch {
+              // ignore
+            }
+            return;
+          }
+
+          this.bgmAudio = audio;
+          this.currentBgmMode = mode;
+        })
+        .catch(() => {
+          onError();
+        });
+    };
+
+    tryFile(0);
+  }
+
+  private ensureBgmRunning(mode: 'menu' | 'battle', fileNames: string[], volume: number) {
+    if (this.isBgmMuted) {
+      this.currentBgmMode = mode;
+      return;
+    }
+
+    const sameMode = this.currentBgmMode === mode;
+    const audioExists = this.hasLiveCurrentBgm();
+
+    if (sameMode && audioExists) {
+      if (this.bgmAudio?.paused) {
+        this.resumeCurrentBgm();
+      }
+      return;
+    }
+
+    if (this.bgmAudio && this.currentBgmMode !== mode) {
+      this.stopCurrentBgmAudio(true);
+    }
+
+    if (sameMode && this.bgmAudio && this.bgmAudio.ended) {
+      this.stopCurrentBgmAudio(true);
+    }
+
+    this.playBgmFromFiles(fileNames, volume, mode);
   }
 
   public getIsMuted(): boolean {
@@ -44,24 +187,38 @@ class SoundEngine {
     return this.isBgmMuted;
   }
 
+  public getBgmMode(): 'none' | 'menu' | 'battle' {
+    return this.currentBgmMode;
+  }
+
   public toggleMute(): boolean {
     this.isMuted = !this.isMuted;
+
     try {
       localStorage.setItem('mba_sfx_muted', String(this.isMuted));
     } catch {}
+
     return this.isMuted;
   }
 
   public toggleBgmMute(): boolean {
     this.isBgmMuted = !this.isBgmMuted;
+
     try {
       localStorage.setItem('mba_bgm_muted', String(this.isBgmMuted));
     } catch {}
+
     if (this.isBgmMuted) {
-      this.stopBGM();
-    } else {
-      this.startBGM();
+      this.pauseCurrentBgm();
+      return this.isBgmMuted;
     }
+
+    if (this.currentBgmMode === 'menu') {
+      this.startMenuBGM();
+    } else if (this.currentBgmMode === 'battle') {
+      this.startBattleBGM();
+    }
+
     return this.isBgmMuted;
   }
 
@@ -72,6 +229,7 @@ class SoundEngine {
 
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
+
     osc.type = 'sine';
     osc.frequency.setValueAtTime(520, ctx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.08);
@@ -92,6 +250,7 @@ class SoundEngine {
 
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
+
     osc.type = isUrgent ? 'sawtooth' : 'triangle';
     osc.frequency.setValueAtTime(isUrgent ? 880 : 440, ctx.currentTime);
 
@@ -109,9 +268,9 @@ class SoundEngine {
     const ctx = this.initCtx();
     if (!ctx) return;
 
-    // Noise burst + sweeping sine
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
+
     osc.type = 'sawtooth';
     osc.frequency.setValueAtTime(800, ctx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.18);
@@ -160,6 +319,7 @@ class SoundEngine {
 
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
+
     osc.type = 'square';
     osc.frequency.setValueAtTime(180, ctx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(45, ctx.currentTime + 0.15);
@@ -178,7 +338,6 @@ class SoundEngine {
     const ctx = this.initCtx();
     if (!ctx) return;
 
-    // Heavy impact explosion
     const now = ctx.currentTime;
     const osc1 = ctx.createOscillator();
     const osc2 = ctx.createOscillator();
@@ -211,8 +370,8 @@ class SoundEngine {
     if (!ctx) return;
 
     const now = ctx.currentTime;
-    // Rising chords
     const notes = [330, 440, 554, 660, 880, 1108];
+
     notes.forEach((freq, idx) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -232,13 +391,41 @@ class SoundEngine {
     });
   }
 
+  public playCorrectAnswer() {
+    if (this.isMuted) return;
+    const ctx = this.initCtx();
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+    const notes = [523.25, 659.25, 783.99, 1046.5];
+
+    notes.forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const startT = now + idx * 0.055;
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, startT);
+
+      gain.gain.setValueAtTime(0.28 * this.masterVolume, startT);
+      gain.gain.exponentialRampToValueAtTime(0.001, startT + 0.35);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(startT);
+      osc.stop(startT + 0.36);
+    });
+  }
+
   public playHeal() {
     if (this.isMuted) return;
     const ctx = this.initCtx();
     if (!ctx) return;
 
     const now = ctx.currentTime;
-    const notes = [523.25, 659.25, 783.99, 1046.5]; // C E G C
+    const notes = [523.25, 659.25, 783.99, 1046.5];
+
     notes.forEach((freq, i) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -252,6 +439,7 @@ class SoundEngine {
 
       osc.connect(gain);
       gain.connect(ctx.destination);
+
       osc.start(t);
       osc.stop(t + 0.36);
     });
@@ -307,10 +495,10 @@ class SoundEngine {
     if (!ctx) return;
 
     const notes = [
-      { f: 523, d: 0.15 }, // C
-      { f: 659, d: 0.15 }, // E
-      { f: 784, d: 0.15 }, // G
-      { f: 1046, d: 0.4 }, // High C
+      { f: 523, d: 0.15 },
+      { f: 659, d: 0.15 },
+      { f: 784, d: 0.15 },
+      { f: 1046, d: 0.4 },
     ];
 
     let t = ctx.currentTime;
@@ -340,6 +528,7 @@ class SoundEngine {
 
     const notes = [440, 392, 349, 293];
     let t = ctx.currentTime;
+
     notes.forEach((f) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -359,170 +548,41 @@ class SoundEngine {
     });
   }
 
-  // Epic Synthesized RPG Battle Soundtrack
+  // ================= MENU BGM =================
+  public startMenuBGM() {
+    this.ensureBgmRunning(
+      'menu',
+      [
+        'Merry Christmas.mp3',
+        'Marry Christmas.mp3',
+        'MarryChrismast.mp3',
+      ],
+      0.45
+    );
+  }
+
+  // ================= BATTLE BGM =================
+  public startBattleBGM() {
+    this.ensureBgmRunning('battle', ['BattleCry.mp3'], 0.45);
+  }
+
+  // Backward compatibility
   public startBGM() {
-    if (this.isBgmMuted || this.bgmInterval !== null) return;
-    const ctx = this.initCtx();
-    if (!ctx) return;
-
-    // 16-step battle loop in D Minor (Tempo ~138 BPM, step = 115ms)
-    // Scale frequencies (Hz):
-    const D3 = 146.83, E3 = 164.81, F3 = 174.61, G3 = 196.00, A3 = 220.00, Bb3 = 233.08, C4 = 261.63;
-    const D4 = 293.66, E4 = 329.63, F4 = 349.23, G4 = 392.00, A4 = 440.00, Bb4 = 466.16, C5 = 523.25, D5 = 587.33;
-
-    // Melody line (32 steps = 2 bars)
-    const melodyPattern: (number | null)[] = [
-      D4, null, D4, F4, G4, null, A4, null,
-      Bb4, A4, G4, null, F4, G4, E4, null,
-      D4, null, F4, null, A4, null, D5, null,
-      C5, Bb4, A4, G4, F4, E4, D4, null
-    ];
-
-    // Driving Bass line (32 steps)
-    const bassPattern: number[] = [
-      D3, D3, D3, D3, G3, G3, A3, A3,
-      Bb3, Bb3, A3, A3, F3, F3, E3, E3,
-      D3, D3, F3, F3, G3, G3, A3, A3,
-      Bb3, Bb3, C4, C4, D3, D3, A3, A3
-    ];
-
-    this.bgmStep = 0;
-    this.bgmInterval = window.setInterval(() => {
-      if (this.isBgmMuted) {
-        this.stopBGM();
-        return;
-      }
-
-      const step = this.bgmStep % 32;
-      const now = ctx.currentTime;
-
-      // 1. Play Bass note (every 8th/16th beat)
-      const bassFreq = bassPattern[step];
-      if (bassFreq) {
-        this.playBattleBass(ctx, bassFreq, now);
-      }
-
-      // 2. Play Lead Melody
-      const melodyFreq = melodyPattern[step];
-      if (melodyFreq) {
-        this.playBattleLead(ctx, melodyFreq, now);
-      }
-
-      // 3. Play Percussive Beat:
-      // Kick on beats 0, 8, 16, 24
-      if (step % 8 === 0) {
-        this.playBattleKick(ctx, now);
-      }
-      // Snare on beats 4, 12, 20, 28
-      else if (step % 8 === 4) {
-        this.playBattleSnare(ctx, now);
-      }
-      // Hi-hat on every odd step
-      else if (step % 2 === 1) {
-        this.playBattleHiHat(ctx, now);
-      }
-
-      this.bgmStep++;
-    }, 115);
+    this.startBattleBGM();
   }
 
-  private playBattleBass(ctx: AudioContext, freq: number, time: number) {
-    if (this.isBgmMuted) return;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(freq, time);
-
-    gain.gain.setValueAtTime(0.08 * this.masterVolume, time);
-    gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.12);
-
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-
-    osc.start(time);
-    osc.stop(time + 0.13);
-  }
-
-  private playBattleLead(ctx: AudioContext, freq: number, time: number) {
-    if (this.isBgmMuted) return;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(freq, time);
-
-    gain.gain.setValueAtTime(0.07 * this.masterVolume, time);
-    gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.16);
-
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-
-    osc.start(time);
-    osc.stop(time + 0.17);
-  }
-
-  private playBattleKick(ctx: AudioContext, time: number) {
-    if (this.isBgmMuted) return;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(140, time);
-    osc.frequency.exponentialRampToValueAtTime(35, time + 0.08);
-
-    gain.gain.setValueAtTime(0.22 * this.masterVolume, time);
-    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.09);
-
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-
-    osc.start(time);
-    osc.stop(time + 0.1);
-  }
-
-  private playBattleSnare(ctx: AudioContext, time: number) {
-    if (this.isBgmMuted) return;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(220, time);
-    osc.frequency.exponentialRampToValueAtTime(60, time + 0.07);
-
-    gain.gain.setValueAtTime(0.12 * this.masterVolume, time);
-    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.08);
-
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-
-    osc.start(time);
-    osc.stop(time + 0.09);
-  }
-
-  private playBattleHiHat(ctx: AudioContext, time: number) {
-    if (this.isBgmMuted) return;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(8000, time);
-
-    gain.gain.setValueAtTime(0.02 * this.masterVolume, time);
-    gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.03);
-
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-
-    osc.start(time);
-    osc.stop(time + 0.035);
+  public setBgmMode(mode: 'menu' | 'battle') {
+    if (mode === 'battle') {
+      this.startBattleBGM();
+    } else {
+      this.startMenuBGM();
+    }
   }
 
   public stopBGM() {
-    if (this.bgmInterval !== null) {
-      clearInterval(this.bgmInterval);
-      this.bgmInterval = null;
-    }
+    this.currentBgmMode = 'none';
+    this.bgmLoadToken++;
+    this.stopCurrentBgmAudio(true);
   }
 }
 

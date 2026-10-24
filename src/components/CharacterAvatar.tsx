@@ -40,9 +40,9 @@ export const CharacterAvatar: React.FC<CharacterAvatarProps> = ({
   // Dimensions
   const sizeClasses = {
     sm: 'w-16 h-16',
-    md: 'w-28 h-28',
-    lg: 'w-40 h-40',
-    hero: 'w-48 h-48 sm:w-60 sm:h-60',
+    md: 'w-24 h-24 sm:w-28 sm:h-28',
+    lg: 'w-28 h-28 sm:w-32 sm:h-32',
+    hero: 'w-28 h-28 sm:w-36 sm:h-36 md:w-44 md:h-44 lg:w-48 lg:h-48',
   }[size];
 
   // Animation transforms based on state
@@ -65,9 +65,9 @@ export const CharacterAvatar: React.FC<CharacterAvatarProps> = ({
 
   const containerWidthClass = {
     sm: 'w-16',
-    md: 'w-32',
-    lg: 'w-44',
-    hero: 'w-52 sm:w-64',
+    md: 'w-28 sm:w-32',
+    lg: 'w-32 sm:w-36',
+    hero: 'w-32 sm:w-40 md:w-48 lg:w-52',
   }[size];
 
   return (
@@ -118,7 +118,7 @@ export const CharacterAvatar: React.FC<CharacterAvatarProps> = ({
 
       {/* Teks nama karakter menampilkan semua teks lengkap tanpa terpotong (tanpa truncate), dengan tinggi konsisten agar gambar tetap di tengah dan tidak bergeser */}
       <div
-        className={`mt-2 w-full min-h-[36px] px-2 py-1 rounded-xl flex items-center justify-center text-center font-black tracking-wide text-white uppercase text-[10px] sm:text-[11px] leading-snug break-words z-10 shadow-md transition-all ${
+        className={`mt-1.5 w-full min-h-[26px] sm:min-h-[28px] px-2 py-1 rounded-xl flex items-center justify-center text-center font-black tracking-wide text-white uppercase text-[10px] sm:text-xs leading-tight break-words z-10 shadow-md transition-all ${
           team === 'A'
             ? 'bg-gradient-to-r from-blue-700 to-sky-600 border border-blue-400/50'
             : 'bg-gradient-to-r from-red-700 to-orange-600 border border-red-400/50'

@@ -115,7 +115,7 @@ export const HealthBar: React.FC<HealthBarProps> = ({
   const isLeft = team === 'A';
 
   return (
-    <div className={`flex flex-col gap-1.5 w-full max-w-md ${isLeft ? 'items-start' : 'items-end'}`}>
+    <div className={`flex flex-col gap-1 w-full ${isLeft ? 'items-start text-left' : 'items-end text-right'}`}>
       {/* Top Header: Team Name, Character, and Active Player */}
       <div className={`flex items-center gap-2 ${isLeft ? 'flex-row' : 'flex-row-reverse'} w-full justify-between`}>
         <div className={`flex items-baseline gap-2 ${isLeft ? 'flex-row' : 'flex-row-reverse'}`}>

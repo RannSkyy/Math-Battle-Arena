@@ -5,10 +5,10 @@ import { HealthBar } from '../components/HealthBar';
 import { CharacterAvatar } from '../components/CharacterAvatar';
 import { CHARACTERS } from '../data/characters';
 import { ARENAS } from '../data/arenas';
-import { generateDynamicQuestion } from '../data/questions';
+import { generateDynamicQuestion, shuffleQuestionOptions } from '../data/questions';
 import { getAllQuestions } from '../utils/gameStorage';
 import { soundEngine } from '../utils/soundEngine';
-import { Timer, Zap, Sparkles, Pause, Play, Award, Flame, RefreshCw, ArrowRight, Swords, LogOut } from 'lucide-react';
+import { Timer, Zap, Sparkles, Pause, Play, Award, Flame, RefreshCw, ArrowRight, Swords, LogOut, Maximize, Minimize, Volume2, VolumeX, Music } from 'lucide-react';
 
 interface BattleScreenProps {
   config: MatchConfig;
@@ -124,7 +124,38 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ config, onMatchFinis
   const [announcementText, setAnnouncementText] = useState<string>('');
   const [isRoundResolved, setIsRoundResolved] = useState<boolean>(false);
 
-  // Initialize Question Pool
+  // Fullscreen & Audio controls right in the Battle HUD
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(
+    typeof document !== 'undefined' ? Boolean(document.fullscreenElement) : false
+  );
+  const [isBgmMuted, setIsBgmMuted] = useState<boolean>(soundEngine.getIsBgmMuted());
+
+  useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+  }, []);
+
+  const handleToggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+      setIsFullscreen(true);
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+        setIsFullscreen(false);
+      }
+    }
+  };
+
+  const handleToggleBgm = () => {
+    const muted = soundEngine.toggleBgmMute();
+    setIsBgmMuted(muted);
+  };
+
+  // Initialize Question Pool with randomized option positions (so correct answer is never always A)
   useEffect(() => {
     const all = getAllQuestions();
     let filtered = all.filter((q) => {
@@ -134,9 +165,9 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ config, onMatchFinis
 
     if (filtered.length === 0) filtered = all;
 
-    const shuffled = [...filtered].sort(() => Math.random() - 0.5);
+    const shuffled = [...filtered].sort(() => Math.random() - 0.5).map(shuffleQuestionOptions);
     setQuestionPool(shuffled);
-    setCurrentQuestion(shuffled[0] || generateDynamicQuestion(config.grade, 'OPERASI_BILANGAN'));
+    setCurrentQuestion(shuffled[0] || shuffleQuestionOptions(generateDynamicQuestion(config.grade, 'OPERASI_BILANGAN')));
     setTimeLeft(config.timerSeconds);
     questionStartTimeRef.current = Date.now();
 
@@ -157,7 +188,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ config, onMatchFinis
           config.grade,
           Math.random() > 0.5 ? 'OPERASI_BILANGAN' : 'LOGIKA_MATEMATIKA'
         );
-        pool.push(dyn);
+        pool.push(shuffleQuestionOptions(dyn));
       }
       setCurrentQuestion(pool[0]);
       return pool;
@@ -291,19 +322,26 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ config, onMatchFinis
       if (defenderHasShield) damage = 0;
 
       // Visuals & Sound
+      const charData = CHARACTERS.find((c) => c.id === activeTeamObj.characterId);
+      const attackName = charData?.attackName || 'Serangan Cepat';
+      const ultiName = charData?.ultimateName || 'Jurus Pamungkas';
+
       if (isUltimate) {
         soundEngine.playUltimate();
+        soundEngine.playCorrectAnswer();
         setScreenShake('intense');
-        setAnnouncementText(`ULTIMATE! ${activeTeamObj.name} (${currentStudent}) MENYERANG!`);
+        setAnnouncementText(`JURUS PAMUNGKAS: ${ultiName}! ${currentStudent} (${activeTeamObj.name})!`);
       } else if (isCritical) {
         soundEngine.playCritical();
+        soundEngine.playCorrectAnswer();
         setScreenShake('intense');
-        setAnnouncementText(`CRITICAL CEPAT! ${currentStudent} mencetak ${damage} DMG!`);
+        setAnnouncementText(`SERANGAN KRITIS! ${currentStudent} mencetak ${damage} DMG!`);
       } else {
+        soundEngine.playCorrectAnswer();
         soundEngine.playHit();
         soundEngine.playCombo(newCombo);
         setScreenShake('mild');
-        setAnnouncementText(`${currentStudent} (${activeTeamObj.name}) LEBIH CEPAT & BENAR!`);
+        setAnnouncementText(`${currentStudent} (${activeTeamObj.name}) lancarkan ${attackName}!`);
       }
 
       if (isTeamA) {
@@ -506,15 +544,15 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ config, onMatchFinis
   return (
     <ArenaBackground arenaId={config.arenaId} intensity={screenShake === 'intense' ? 'intense' : 'normal'}>
       <div
-        className={`w-full min-h-[calc(100vh-65px)] flex flex-col justify-between p-2 sm:p-5 transition-transform ${
+        className={`w-full h-screen max-h-screen flex flex-col justify-between p-2 sm:p-3 overflow-hidden select-none transition-transform ${
           screenShake === 'mild' ? 'animate-shake-mild' : screenShake === 'intense' ? 'animate-shake-intense' : ''
         }`}
       >
         {/* ================= TOP HUD: HP & MATCH HEADER ================= */}
-        <div className="w-full max-w-7xl mx-auto flex flex-col gap-2">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-            {/* Team Kiri HP */}
-            <div className="p-3 rounded-2xl bg-slate-950/85 border border-blue-500/80 shadow-[0_0_20px_rgba(37,99,235,0.25)] backdrop-blur-md">
+        <div className="w-full max-w-7xl mx-auto flex flex-col gap-1.5 shrink-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 items-stretch">
+            {/* Team Kiri HP (Rata Kiri, Snug fit tanpa ruang kosong) */}
+            <div className="p-2 sm:p-2.5 rounded-xl bg-slate-950/90 border-2 border-blue-500/80 shadow-[0_0_15px_rgba(37,99,235,0.2)] backdrop-blur-md flex flex-col justify-center">
               <HealthBar
                 team="A"
                 teamName={teamA.name}
@@ -531,8 +569,8 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ config, onMatchFinis
               />
             </div>
 
-            {/* Team Kanan HP */}
-            <div className="p-3 rounded-2xl bg-slate-950/85 border border-red-500/80 shadow-[0_0_20px_rgba(220,38,38,0.25)] backdrop-blur-md">
+            {/* Team Kanan HP (Rata Kanan, Seimbang, Snug fit tanpa ruang kosong) */}
+            <div className="p-2 sm:p-2.5 rounded-xl bg-slate-950/90 border-2 border-red-500/80 shadow-[0_0_15px_rgba(220,38,38,0.2)] backdrop-blur-md flex flex-col justify-center text-right">
               <HealthBar
                 team="B"
                 teamName={teamB.name}
@@ -550,51 +588,72 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ config, onMatchFinis
             </div>
           </div>
 
-          {/* DUEL ANNOUNCEMENT BANNER */}
-          <div className="flex items-center justify-between px-4 py-2 rounded-xl bg-slate-950/90 border border-slate-800 text-xs">
+          {/* DUEL ANNOUNCEMENT BANNER WITH FULLSCREEN & SOUND CONTROLS */}
+          <div className="flex items-center justify-between px-3 py-1 rounded-xl bg-slate-950/90 border border-slate-800 text-xs h-8 shrink-0">
             <div className="flex items-center gap-2">
-              <span className="text-amber-400 font-mono font-bold">SOAL #{roundNumber}</span>
+              <span className="text-amber-400 font-mono font-bold text-[11px] sm:text-xs">SOAL #{roundNumber}</span>
               <span className="text-slate-600">·</span>
-              <div className="flex items-center gap-2 text-slate-300">
+              <div className="flex items-center gap-1.5 text-slate-300 text-[11px] sm:text-xs">
                 <span className="text-blue-400 font-bold">{studentA}</span>
-                <span className="text-amber-400 font-black">VS</span>
+                <span className="text-amber-400 font-black text-[10px]">VS</span>
                 <span className="text-red-400 font-bold">{studentB}</span>
-                <span className="text-slate-500 text-[11px]">(Cepat-cepatan Menjawab!)</span>
+                <span className="text-slate-500 text-[10px] hidden sm:inline">(Cepat-cepatan Menjawab!)</span>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              {/* Fullscreen Button */}
+              <button
+                onClick={handleToggleFullscreen}
+                className="px-2 py-0.5 text-[11px] font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 flex items-center gap-1 cursor-pointer transition-colors"
+                title={isFullscreen ? 'Keluar Layar Penuh' : 'Layar Penuh (F11)'}
+              >
+                {isFullscreen ? <Minimize className="w-3 h-3 text-amber-400" /> : <Maximize className="w-3 h-3 text-slate-300" />}
+                <span className="hidden md:inline">{isFullscreen ? 'Normal' : 'Layar Penuh'}</span>
+              </button>
+
+              {/* BGM Toggle */}
+              <button
+                onClick={handleToggleBgm}
+                className="p-1 text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition-colors"
+                title={isBgmMuted ? 'Nyalakan Musik' : 'Matikan Musik'}
+              >
+                <Music className={`w-3.5 h-3.5 ${isBgmMuted ? 'text-slate-500' : 'text-amber-400 animate-pulse'}`} />
+              </button>
+
+              {/* Pause / Resume */}
               <button
                 onClick={() => {
                   soundEngine.playClick();
                   setIsPaused(!isPaused);
                 }}
-                className="px-2.5 py-1 text-[11px] font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 flex items-center gap-1 cursor-pointer transition-colors"
+                className="px-2 py-0.5 text-[11px] font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 flex items-center gap-1 cursor-pointer transition-colors"
               >
                 {isPaused ? <Play className="w-3 h-3 text-emerald-400" /> : <Pause className="w-3 h-3 text-amber-400" />}
-                <span>{isPaused ? 'Lanjut' : 'Jeda'}</span>
+                <span className="hidden sm:inline">{isPaused ? 'Lanjut' : 'Jeda'}</span>
               </button>
 
+              {/* Exit Match */}
               <button
                 onClick={() => {
                   soundEngine.playClick();
                   soundEngine.stopBGM();
                   onExit();
                 }}
-                className="px-2.5 py-1 text-[11px] font-bold text-red-300 hover:text-white bg-red-950/80 hover:bg-red-900 rounded-lg border border-red-700/60 flex items-center gap-1 cursor-pointer transition-colors"
+                className="px-2 py-0.5 text-[11px] font-bold text-red-300 hover:text-white bg-red-950/80 hover:bg-red-900 rounded-lg border border-red-700/60 flex items-center gap-1 cursor-pointer transition-colors"
                 title="Keluar dari pertandingan ke menu utama"
               >
                 <LogOut className="w-3 h-3 text-red-400" />
-                <span>Keluar</span>
+                <span className="hidden sm:inline">Keluar</span>
               </button>
             </div>
           </div>
         </div>
 
         {/* ================= CENTER STAGE: CHARACTERS & FLOATING DAMAGE ================= */}
-        <div className="relative w-full max-w-6xl mx-auto flex items-center justify-between px-2 sm:px-6 my-auto">
-          {/* TEAM KIRI (CHARACTER PORTRAIT) */}
-          <div className="relative flex flex-col items-center">
+        <div className="relative w-full max-w-6xl mx-auto grid grid-cols-12 items-center gap-2 sm:gap-4 px-2 my-auto shrink-0">
+          {/* TEAM KIRI (CHARACTER PORTRAIT) - EXACT LEFT 3 COLUMNS */}
+          <div className="col-span-3 flex flex-col items-center justify-center relative">
             <CharacterAvatar
               characterId={teamA.characterId}
               team="A"
@@ -622,48 +681,54 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ config, onMatchFinis
             )}
           </div>
 
-          {/* CENTER QUESTION CARD & CLOCK */}
-          <div className="flex-1 max-w-lg mx-3 sm:mx-6 flex flex-col items-center text-center z-20">
-            {/* Countdown Clock */}
-            <div className="relative w-16 h-16 sm:w-20 sm:h-20 mb-3 flex items-center justify-center">
+          {/* CENTER QUESTION CARD & CLOCK - EXACT MIDDLE 6 COLUMNS */}
+          <div className="col-span-6 flex flex-col items-center justify-center text-center z-20 px-1">
+            {/* Countdown Clock (Fixed dimensions) */}
+            <div className="relative w-10 h-10 sm:w-12 sm:h-12 mb-1 flex items-center justify-center shrink-0">
               <div
-                className={`w-full h-full rounded-full border-4 flex flex-col items-center justify-center shadow-2xl backdrop-blur-md transition-colors ${
+                className={`w-full h-full rounded-full border-2 sm:border-3 flex flex-col items-center justify-center shadow-xl backdrop-blur-md transition-colors ${
                   timeLeft <= 3
                     ? 'border-red-500 bg-red-950/80 animate-ping-mild shadow-red-500/50'
                     : 'border-amber-400 bg-slate-950/90 shadow-amber-500/20'
                 }`}
               >
-                <span className="font-mono font-black text-xl sm:text-2xl text-white tabular-nums">
+                <span className="font-mono font-black text-base sm:text-lg text-white tabular-nums leading-none">
                   {timeLeft}
                 </span>
-                <span className="text-[8px] uppercase tracking-wider text-slate-400 font-bold -mt-0.5">
+                <span className="text-[6px] sm:text-[7px] uppercase tracking-wider text-slate-400 font-bold -mt-0.5">
                   DETIK
                 </span>
               </div>
             </div>
 
-            {/* Question Text Box */}
-            {currentQuestion && (
-              <div className="w-full p-4 sm:p-5 rounded-2xl bg-slate-950/95 border-2 border-amber-500/60 shadow-2xl backdrop-blur-xl">
-                <div className="text-[11px] font-bold text-amber-400 uppercase tracking-widest mb-1">
-                  {currentQuestion.topic} · SMP Kelas {currentQuestion.grade}
-                </div>
-                <h3 className="text-xl sm:text-3xl font-black text-white leading-snug tracking-wide py-1 drop-shadow-md">
-                  {currentQuestion.prompt}
-                </h3>
-              </div>
-            )}
+            {/* Question Text Box (Harmonized fixed height so it matches character avatar and answer decks) */}
+            <div className="w-full h-22 sm:h-26 md:h-28 p-2.5 sm:p-3 rounded-2xl bg-slate-950/95 border-2 border-amber-500/60 shadow-2xl backdrop-blur-xl flex flex-col justify-center items-center overflow-hidden shrink-0">
+              {currentQuestion ? (
+                <>
+                  <div className="text-[10px] sm:text-[11px] font-bold text-amber-400 uppercase tracking-widest mb-0.5">
+                    {currentQuestion.topic} · SMP Kelas {currentQuestion.grade}
+                  </div>
+                  <h3 className="text-xs sm:text-base md:text-lg font-black text-white leading-snug tracking-wide py-0.5 drop-shadow-md text-center line-clamp-2">
+                    {currentQuestion.prompt}
+                  </h3>
+                </>
+              ) : (
+                <div className="text-slate-400 text-xs animate-pulse">Menyiapkan soal...</div>
+              )}
+            </div>
 
-            {/* Live Announcer Banner */}
-            {announcementText && (
-              <div className="mt-3 px-4 py-1.5 rounded-full bg-slate-950/95 border-2 border-amber-400 text-amber-300 text-xs sm:text-sm font-black tracking-wide uppercase shadow-2xl animate-bounce">
-                {announcementText}
-              </div>
-            )}
+            {/* Live Announcer Banner (Dedicated fixed height slot so layout never shifts) */}
+            <div className="w-full h-5 mt-1 flex items-center justify-center shrink-0">
+              {announcementText && (
+                <div className="px-2.5 py-0.5 rounded-full bg-slate-950/95 border border-amber-400 text-amber-300 text-[10px] sm:text-xs font-black tracking-wide uppercase shadow-xl animate-bounce">
+                  {announcementText}
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* TEAM KANAN (CHARACTER PORTRAIT) */}
-          <div className="relative flex flex-col items-center">
+          {/* TEAM KANAN (CHARACTER PORTRAIT) - EXACT RIGHT 3 COLUMNS */}
+          <div className="col-span-3 flex flex-col items-center justify-center relative">
             <CharacterAvatar
               characterId={teamB.characterId}
               team="B"
@@ -693,22 +758,23 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ config, onMatchFinis
         </div>
 
         {/* ================= BOTTOM SPLIT DECK: 4 BUTTONS LEFT & 4 BUTTONS RIGHT ================= */}
-        <div className="w-full max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8 mt-2 z-20">
-          {/* ================= TEAM KIRI 4 BUTTONS ================= */}
-          <div className="p-3 sm:p-4 rounded-2xl bg-gradient-to-r from-blue-950/90 to-slate-950/90 border-2 border-blue-500/70 shadow-xl backdrop-blur-md">
-            <div className="flex items-center justify-between mb-2 pb-2 border-b border-blue-800/60">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-blue-500 animate-pulse" />
-                <span className="font-extrabold text-sm text-blue-300 uppercase">
+        {/* Desain ringkas dan seimbang agar tidak mendominasi/memenuhi halaman, sejajar dengan karakter */}
+        <div className="w-full max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 z-20 items-stretch shrink-0">
+          {/* ================= TEAM KIRI 4 BUTTONS (RATA KIRI) ================= */}
+          <div className="rounded-2xl bg-gradient-to-r from-blue-950/90 to-slate-950/90 border-2 border-blue-500/80 shadow-[0_0_20px_rgba(37,99,235,0.2)] backdrop-blur-md flex flex-col justify-between shrink-0 p-2 sm:p-2.5 transition-all duration-200 overflow-hidden">
+            <div className="flex items-center justify-between border-b border-blue-800/60 pb-1 mb-1.5 shrink-0">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                <span className="font-extrabold uppercase text-blue-300 text-[11px] sm:text-xs">
                   Tombol {teamA.name}
                 </span>
               </div>
-              <span className="text-[11px] font-mono text-slate-400">
+              <span className="font-mono text-slate-400 truncate ml-2 text-[9px] sm:text-[10px]">
                 Pemain: <strong className="text-white">{studentA}</strong> (Keys: 1, 2, 3, 4 / Q, W, E, R)
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
+            <div className="grid grid-cols-2 gap-1.5 sm:gap-2 flex-1 items-stretch">
               {currentQuestion?.options.map((optionText, idx) => {
                 const teamAKeyLabels = ['[1] Q', '[2] W', '[3] E', '[4] R'];
                 const isSelected = teamAChosen === idx;
@@ -717,7 +783,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ config, onMatchFinis
                     key={`A-${idx}`}
                     disabled={isRoundResolved || teamALocked || isPaused}
                     onClick={() => handleSpeedAnswer('A', idx)}
-                    className={`p-3 rounded-xl border text-left font-bold text-xs sm:text-sm flex items-center justify-between transition-all cursor-pointer shadow-md ${
+                    className={`rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer shadow-md select-none overflow-hidden min-h-[36px] sm:min-h-[40px] md:min-h-[44px] px-2.5 sm:px-3 py-1 text-xs sm:text-sm font-bold ${
                       isSelected
                         ? 'bg-blue-600 text-white border-blue-400 scale-102'
                         : teamALocked
@@ -725,8 +791,8 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ config, onMatchFinis
                         : 'bg-slate-900/90 hover:bg-blue-900/50 hover:border-blue-400 text-slate-100 border-slate-700/80 active:scale-95'
                     }`}
                   >
-                    <span className="truncate pr-1">{optionText}</span>
-                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-blue-950 text-blue-300 border border-blue-700/50 shrink-0">
+                    <span className="truncate pr-1.5 flex-1 leading-tight">{optionText}</span>
+                    <span className="font-mono rounded bg-blue-950 text-blue-300 border border-blue-700/50 shrink-0 text-[9px] sm:text-[10px] px-1.5 py-0.5">
                       {teamAKeyLabels[idx] || idx + 1}
                     </span>
                   </button>
@@ -735,21 +801,21 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ config, onMatchFinis
             </div>
           </div>
 
-          {/* ================= TEAM KANAN 4 BUTTONS ================= */}
-          <div className="p-3 sm:p-4 rounded-2xl bg-gradient-to-l from-red-950/90 to-slate-950/90 border-2 border-red-500/70 shadow-xl backdrop-blur-md">
-            <div className="flex items-center justify-between mb-2 pb-2 border-b border-red-800/60">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
-                <span className="font-extrabold text-sm text-red-300 uppercase">
+          {/* ================= TEAM KANAN 4 BUTTONS (RATA KANAN & SEIMBANG) ================= */}
+          <div className="rounded-2xl bg-gradient-to-l from-red-950/90 to-slate-950/90 border-2 border-red-500/80 shadow-[0_0_20px_rgba(220,38,38,0.2)] backdrop-blur-md flex flex-col justify-between shrink-0 p-2 sm:p-2.5 text-right transition-all duration-200 overflow-hidden">
+            <div className="flex items-center justify-between flex-row-reverse border-b border-red-800/60 pb-1 mb-1.5 text-right shrink-0">
+              <div className="flex items-center gap-1.5 flex-row-reverse">
+                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                <span className="font-extrabold uppercase text-red-300 text-[11px] sm:text-xs">
                   Tombol {teamB.name}
                 </span>
               </div>
-              <span className="text-[11px] font-mono text-slate-400">
-                Pemain: <strong className="text-white">{studentB}</strong> (Keys: 7, 8, 9, 0 / U, I, O, P)
+              <span className="font-mono text-slate-400 truncate mr-2 text-[9px] sm:text-[10px]">
+                (Keys: 7, 8, 9, 0 / U, I, O, P) <strong className="text-white">{studentB}</strong> :Pemain
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
+            <div className="grid grid-cols-2 gap-1.5 sm:gap-2 flex-1 items-stretch">
               {currentQuestion?.options.map((optionText, idx) => {
                 const teamBKeyLabels = ['[7] U', '[8] I', '[9] O', '[0] P'];
                 const isSelected = teamBChosen === idx;
@@ -758,7 +824,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ config, onMatchFinis
                     key={`B-${idx}`}
                     disabled={isRoundResolved || teamBLocked || isPaused}
                     onClick={() => handleSpeedAnswer('B', idx)}
-                    className={`p-3 rounded-xl border text-left font-bold text-xs sm:text-sm flex items-center justify-between transition-all cursor-pointer shadow-md ${
+                    className={`rounded-xl border flex items-center justify-between flex-row-reverse transition-all cursor-pointer shadow-md select-none overflow-hidden min-h-[36px] sm:min-h-[40px] md:min-h-[44px] px-2.5 sm:px-3 py-1 text-xs sm:text-sm font-bold ${
                       isSelected
                         ? 'bg-red-600 text-white border-red-400 scale-102'
                         : teamBLocked
@@ -766,8 +832,8 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ config, onMatchFinis
                         : 'bg-slate-900/90 hover:bg-red-900/50 hover:border-red-400 text-slate-100 border-slate-700/80 active:scale-95'
                     }`}
                   >
-                    <span className="truncate pr-1">{optionText}</span>
-                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-red-950 text-red-300 border border-red-700/50 shrink-0">
+                    <span className="truncate pl-1.5 flex-1 leading-tight text-right">{optionText}</span>
+                    <span className="font-mono rounded bg-red-950 text-red-300 border border-red-700/50 shrink-0 text-[9px] sm:text-[10px] px-1.5 py-0.5">
                       {teamBKeyLabels[idx] || idx + 1}
                     </span>
                   </button>

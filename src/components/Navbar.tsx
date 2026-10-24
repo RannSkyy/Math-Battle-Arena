@@ -38,27 +38,29 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, inBattl
 
   return (
     <header className="relative z-30 flex items-center justify-between px-6 py-3 border-b border-slate-800/80 bg-slate-950/85 backdrop-blur-md">
-      {/* Zone 1: Single text element wordmark in display face */}
+      {/* Zone 1: Wordmark in modern display font */}
       <button
         onClick={() => {
           soundEngine.playClick();
           onNavigate('home');
         }}
-        className="text-lg md:text-xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-amber-200 hover:opacity-90 transition-opacity uppercase text-left whitespace-nowrap shrink-0"
-        style={{ fontFamily: 'var(--font-cinzel), serif' }}
+        className="text-lg md:text-xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-amber-200 hover:opacity-90 transition-opacity uppercase text-left whitespace-nowrap shrink-0 cursor-pointer"
+        style={{ fontFamily: 'var(--font-heading), sans-serif' }}
       >
         Math Battle Arena
       </button>
 
-      {/* Zone 2: 4-6 clean text navigation links */}
-      <nav className="hidden md:flex items-center gap-6 text-sm font-semibold text-slate-300">
+      {/* Zone 2: Navigation links with stable width to prevent glitch */}
+      <nav className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-300">
         <button
           onClick={() => {
             soundEngine.playClick();
             onNavigate('setup');
           }}
-          className={`hover:text-amber-400 transition-colors whitespace-nowrap ${
-            currentView === 'setup' || currentView === 'battle' ? 'text-amber-400 font-bold' : ''
+          className={`px-3 py-1.5 rounded-lg border transition-all duration-150 whitespace-nowrap cursor-pointer ${
+            currentView === 'setup' || currentView === 'battle'
+              ? 'text-amber-400 bg-amber-500/15 border-amber-500/40 shadow-xs'
+              : 'text-slate-300 hover:text-white hover:bg-slate-900 border-transparent'
           }`}
         >
           Pertandingan
@@ -68,8 +70,10 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, inBattl
             soundEngine.playClick();
             onNavigate('practice');
           }}
-          className={`hover:text-amber-400 transition-colors whitespace-nowrap ${
-            currentView === 'practice' ? 'text-amber-400 font-bold' : ''
+          className={`px-3 py-1.5 rounded-lg border transition-all duration-150 whitespace-nowrap cursor-pointer ${
+            currentView === 'practice'
+              ? 'text-amber-400 bg-amber-500/15 border-amber-500/40 shadow-xs'
+              : 'text-slate-300 hover:text-white hover:bg-slate-900 border-transparent'
           }`}
         >
           Latihan Mandiri
@@ -79,8 +83,10 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, inBattl
             soundEngine.playClick();
             onNavigate('materi');
           }}
-          className={`hover:text-amber-400 transition-colors whitespace-nowrap ${
-            currentView === 'materi' ? 'text-amber-400 font-bold' : ''
+          className={`px-3 py-1.5 rounded-lg border transition-all duration-150 whitespace-nowrap cursor-pointer ${
+            currentView === 'materi'
+              ? 'text-amber-400 bg-amber-500/15 border-amber-500/40 shadow-xs'
+              : 'text-slate-300 hover:text-white hover:bg-slate-900 border-transparent'
           }`}
         >
           Materi SMP
@@ -90,8 +96,10 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, inBattl
             soundEngine.playClick();
             onNavigate('dashboard');
           }}
-          className={`hover:text-amber-400 transition-colors whitespace-nowrap ${
-            currentView === 'dashboard' ? 'text-amber-400 font-bold' : ''
+          className={`px-3 py-1.5 rounded-lg border transition-all duration-150 whitespace-nowrap cursor-pointer ${
+            currentView === 'dashboard'
+              ? 'text-amber-400 bg-amber-500/15 border-amber-500/40 shadow-xs'
+              : 'text-slate-300 hover:text-white hover:bg-slate-900 border-transparent'
           }`}
         >
           Dashboard Guru
@@ -101,8 +109,10 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, inBattl
             soundEngine.playClick();
             onNavigate('history');
           }}
-          className={`hover:text-amber-400 transition-colors whitespace-nowrap ${
-            currentView === 'history' ? 'text-amber-400 font-bold' : ''
+          className={`px-3 py-1.5 rounded-lg border transition-all duration-150 whitespace-nowrap cursor-pointer ${
+            currentView === 'history'
+              ? 'text-amber-400 bg-amber-500/15 border-amber-500/40 shadow-xs'
+              : 'text-slate-300 hover:text-white hover:bg-slate-900 border-transparent'
           }`}
         >
           Riwayat & Hall of Fame
@@ -124,7 +134,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate, inBattl
         {/* BGM Loop Toggle */}
         <button
           onClick={handleToggleBgm}
-          title={bgmMuted ? 'Nyalakan Musik Battle' : 'Matikan Musik Battle'}
+          title={bgmMuted ? 'Nyalakan Musik (BGM)' : 'Matikan Musik (BGM)'}
           className="p-2 text-slate-300 hover:text-white bg-slate-900 hover:bg-slate-800 rounded-lg border border-slate-700/60 transition-colors"
           aria-label="Toggle BGM"
         >

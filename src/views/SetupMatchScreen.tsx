@@ -95,7 +95,7 @@ export const SetupMatchScreen: React.FC<SetupMatchScreenProps> = ({ onStartMatch
       {/* Title */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
         <div>
-          <h2 className="text-2xl md:text-3xl font-black uppercase tracking-wider text-white" style={{ fontFamily: 'var(--font-cinzel), serif' }}>
+          <h2 className="text-2xl md:text-3xl font-black uppercase tracking-wider text-white" style={{ fontFamily: 'var(--font-heading), sans-serif' }}>
             Konfigurasi Pertandingan
           </h2>
           <p className="text-xs text-slate-400 mt-1">
@@ -170,11 +170,13 @@ export const SetupMatchScreen: React.FC<SetupMatchScreenProps> = ({ onStartMatch
                   <span className="text-slate-400 font-medium">Senjata:</span>{' '}
                   <span className="text-slate-100 font-semibold">{CHARACTERS.find((c) => c.id === teamAChar)?.weapon}</span>
                 </div>
-                <div className="text-slate-300 text-[11px] leading-relaxed">
-                  <span className="text-slate-400 font-medium">Jurus:</span>{' '}
-                  <span className="text-slate-100 font-semibold">{CHARACTERS.find((c) => c.id === teamAChar)?.attackName}</span> ·{' '}
-                  <span className="text-slate-400 font-medium">Ulti:</span>{' '}
-                  <span className="text-amber-400 font-bold">{CHARACTERS.find((c) => c.id === teamAChar)?.ultimateName}</span>
+                <div className="text-slate-300 text-xs flex flex-wrap items-center gap-1.5 pt-0.5">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-950/70 border border-blue-500/40 text-[11px] font-semibold text-blue-200">
+                    <span className="text-blue-400 font-bold">Jurus:</span> {CHARACTERS.find((c) => c.id === teamAChar)?.attackName}
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-950/70 border border-amber-500/40 text-[11px] font-bold text-amber-300">
+                    <span className="text-amber-400 font-extrabold">Ulti:</span> {CHARACTERS.find((c) => c.id === teamAChar)?.ultimateName}
+                  </span>
                 </div>
               </div>
             </div>
@@ -234,11 +236,13 @@ export const SetupMatchScreen: React.FC<SetupMatchScreenProps> = ({ onStartMatch
                   <span className="text-slate-400 font-medium">Senjata:</span>{' '}
                   <span className="text-slate-100 font-semibold">{CHARACTERS.find((c) => c.id === teamBChar)?.weapon}</span>
                 </div>
-                <div className="text-slate-300 text-[11px] leading-relaxed">
-                  <span className="text-slate-400 font-medium">Jurus:</span>{' '}
-                  <span className="text-slate-100 font-semibold">{CHARACTERS.find((c) => c.id === teamBChar)?.attackName}</span> ·{' '}
-                  <span className="text-slate-400 font-medium">Ulti:</span>{' '}
-                  <span className="text-amber-400 font-bold">{CHARACTERS.find((c) => c.id === teamBChar)?.ultimateName}</span>
+                <div className="text-slate-300 text-xs flex flex-wrap items-center gap-1.5 pt-0.5">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-950/70 border border-rose-500/40 text-[11px] font-semibold text-rose-200">
+                    <span className="text-rose-400 font-bold">Jurus:</span> {CHARACTERS.find((c) => c.id === teamBChar)?.attackName}
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-950/70 border border-amber-500/40 text-[11px] font-bold text-amber-300">
+                    <span className="text-amber-400 font-extrabold">Ulti:</span> {CHARACTERS.find((c) => c.id === teamBChar)?.ultimateName}
+                  </span>
                 </div>
               </div>
             </div>

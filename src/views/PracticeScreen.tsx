@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Question, GradeLevel, QuestionCategory } from '../types/game';
-import { generateDynamicQuestion } from '../data/questions';
+import { generateDynamicQuestion, shuffleQuestionOptions } from '../data/questions';
 import { getAllQuestions } from '../utils/gameStorage';
 import { soundEngine } from '../utils/soundEngine';
 import { UserCheck, CheckCircle2, XCircle, ArrowRight, RotateCcw, Lightbulb, HelpCircle } from 'lucide-react';
@@ -30,11 +30,11 @@ export const PracticeScreen: React.FC = () => {
 
     if (filtered.length > 0) {
       const randomQ = filtered[Math.floor(Math.random() * filtered.length)];
-      setCurrentQuestion(randomQ);
+      setCurrentQuestion(shuffleQuestionOptions(randomQ));
     } else {
       const fallbackCat = (category !== 'ALL' ? category : 'OPERASI_BILANGAN') as QuestionCategory;
       const dyn = generateDynamicQuestion(grade, fallbackCat);
-      setCurrentQuestion(dyn);
+      setCurrentQuestion(shuffleQuestionOptions(dyn));
     }
   };
 
@@ -65,7 +65,7 @@ export const PracticeScreen: React.FC = () => {
             <UserCheck className="w-3.5 h-3.5" />
             Mode Latihan Mandiri
           </div>
-          <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-wider text-white" style={{ fontFamily: 'var(--font-cinzel), serif' }}>
+          <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-wider text-white" style={{ fontFamily: 'var(--font-heading), sans-serif' }}>
             Latihan Soal Matematika
           </h2>
           <p className="text-xs text-slate-400 mt-1">

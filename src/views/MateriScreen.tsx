@@ -120,7 +120,7 @@ export const MateriScreen: React.FC = () => {
             <BookOpen className="w-3.5 h-3.5" />
             Rangkuman Rumus & Materi
           </div>
-          <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-wider text-white" style={{ fontFamily: 'var(--font-cinzel), serif' }}>
+          <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-wider text-white" style={{ fontFamily: 'var(--font-heading), sans-serif' }}>
             Buku Panduan Matematika SMP
           </h2>
           <p className="text-xs text-slate-400 mt-1">

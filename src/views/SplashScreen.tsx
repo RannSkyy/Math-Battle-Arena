@@ -24,7 +24,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onStart, onOpenGuide
       <div className="relative z-10 max-w-3xl mb-4">
         <h1
           className="text-4xl sm:text-6xl md:text-7xl font-black tracking-wider uppercase text-transparent bg-clip-text bg-gradient-to-b from-amber-200 via-amber-400 to-orange-600 drop-shadow-[0_4px_16px_rgba(245,158,11,0.4)]"
-          style={{ fontFamily: 'var(--font-cinzel), serif' }}
+          style={{ fontFamily: 'var(--font-heading), sans-serif' }}
         >
           Math Battle Arena
         </h1>

@@ -121,7 +121,7 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({ summary, onRematch, 
 
         <h1
           className="text-4xl sm:text-6xl font-black uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-orange-400 drop-shadow-[0_4px_16px_rgba(245,158,11,0.5)]"
-          style={{ fontFamily: 'var(--font-cinzel), serif' }}
+          style={{ fontFamily: 'var(--font-heading), sans-serif' }}
         >
           {winnerTeamName} Menang!
         </h1>

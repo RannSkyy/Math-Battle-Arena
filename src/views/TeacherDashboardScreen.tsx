@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Question, GradeLevel, QuestionCategory, QuestionType, MatchHistoryRecord } from '../types/game';
 import { getAllQuestions, saveCustomQuestion, updateQuestion, deleteQuestion, exportQuestionsToJson, importQuestionsFromJson, getMatchHistory, clearMatchHistory, downloadMatchCsv } from '../utils/gameStorage';
-import { generateAiMathQuestions } from '../services/aiQuestionService';
 import { soundEngine } from '../utils/soundEngine';
-import { Settings, Plus, Sparkles, Download, Upload, Trash2, Pencil, BookOpen, Clock, Users, History, FileText, Check, AlertCircle, X, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Settings, Plus, Download, Upload, Trash2, Pencil, BookOpen, Clock, Users, History, FileText, Check, AlertCircle, X, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
 export const TeacherDashboardScreen: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'bank' | 'ai' | 'history' | 'settings'>('bank');
+  const [activeTab, setActiveTab] = useState<'bank' | 'history'>('bank');
   const [questions, setQuestions] = useState<Question[]>([]);
   const [matchHistory, setMatchHistory] = useState<MatchHistoryRecord[]>([]);
 
@@ -34,14 +33,6 @@ export const TeacherDashboardScreen: React.FC = () => {
   const [editCorrectIdx, setEditCorrectIdx] = useState(0);
   const [editExplanation, setEditExplanation] = useState('');
   const [editDifficulty, setEditDifficulty] = useState<'EASY' | 'MEDIUM' | 'HARD'>('EASY');
-
-  // AI Generator state
-  const [aiTopic, setAiTopic] = useState('Teorema Pythagoras dan Tripel Pythagoras');
-  const [aiGrade, setAiGrade] = useState<GradeLevel>('VIII');
-  const [aiCount, setAiCount] = useState(3);
-  const [isGeneratingAi, setIsGeneratingAi] = useState(false);
-  const [aiGeneratedList, setAiGeneratedList] = useState<Question[]>([]);
-  const [aiMessage, setAiMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   // Import / Export state
   const [importStatus, setImportStatus] = useState<string | null>(null);
@@ -180,36 +171,6 @@ export const TeacherDashboardScreen: React.FC = () => {
     reader.readAsText(file);
   };
 
-  const handleRunAiGenerator = async () => {
-    if (!aiTopic.trim()) return;
-    setIsGeneratingAi(true);
-    setAiMessage(null);
-    soundEngine.playClick();
-
-    try {
-      const results = await generateAiMathQuestions(aiTopic.trim(), aiGrade, aiCount);
-      setAiGeneratedList(results);
-      setAiMessage({ text: `Berhasil membuat ${results.length} soal dengan Gemini AI!`, type: 'success' });
-      soundEngine.playVictory();
-    } catch (err: unknown) {
-      setAiMessage({
-        text: 'Gagal membuat soal via AI: Pastikan koneksi atau kuota API tersedia. Soal tetap dapat dibuat manual.',
-        type: 'error',
-      });
-      soundEngine.playWrong();
-    } finally {
-      setIsGeneratingAi(false);
-    }
-  };
-
-  const handleSaveAiQuestions = () => {
-    aiGeneratedList.forEach((q) => saveCustomQuestion(q));
-    soundEngine.playVictory();
-    showToast(`Berhasil menyimpan ${aiGeneratedList.length} soal AI ke bank soal!`);
-    setAiGeneratedList([]);
-    loadData();
-  };
-
   // Filtered Questions
   const filteredQuestions = questions.filter((q) => {
     if (filterGrade !== 'ALL' && q.grade !== filterGrade) return false;
@@ -222,11 +183,11 @@ export const TeacherDashboardScreen: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-wider text-white" style={{ fontFamily: 'var(--font-cinzel), serif' }}>
+          <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-wider text-white" style={{ fontFamily: 'var(--font-heading), sans-serif' }}>
             Dashboard Guru
           </h2>
           <p className="text-xs text-slate-400 mt-1">
-            Pusat kendali bank soal, integrasi generator AI, dan manajemen riwayat pertandingan kelas.
+            Pusat kendali bank soal dan manajemen riwayat pertandingan kelas.
           </p>
         </div>
 
@@ -237,8 +198,8 @@ export const TeacherDashboardScreen: React.FC = () => {
               soundEngine.playClick();
               setActiveTab('bank');
             }}
-            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
-              activeTab === 'bank' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-white'
+            className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
+              activeTab === 'bank' ? 'bg-amber-500 text-slate-950 shadow-xs' : 'text-slate-400 hover:text-white'
             }`}
           >
             Bank Soal ({questions.length})
@@ -246,22 +207,10 @@ export const TeacherDashboardScreen: React.FC = () => {
           <button
             onClick={() => {
               soundEngine.playClick();
-              setActiveTab('ai');
-            }}
-            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
-              activeTab === 'ai' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Sparkles className="w-3 h-3" />
-            AI Generator
-          </button>
-          <button
-            onClick={() => {
-              soundEngine.playClick();
               setActiveTab('history');
             }}
-            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
-              activeTab === 'history' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-white'
+            className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
+              activeTab === 'history' ? 'bg-amber-500 text-slate-950 shadow-xs' : 'text-slate-400 hover:text-white'
             }`}
           >
             Riwayat ({matchHistory.length})
@@ -405,137 +354,7 @@ export const TeacherDashboardScreen: React.FC = () => {
         </div>
       )}
 
-      {/* ================= TAB 2: AI QUESTION GENERATOR ================= */}
-      {activeTab === 'ai' && (
-        <div className="my-6 space-y-6">
-          <div className="p-6 rounded-2xl bg-gradient-to-r from-purple-950/40 via-slate-900 to-slate-950 border border-purple-500/30">
-            <div className="flex items-center gap-2 text-purple-400 font-bold text-xs uppercase tracking-wider mb-2">
-              <Sparkles className="w-4 h-4" />
-              Generator Soal Cerdas Berbasis Gemini AI
-            </div>
-            <h3 className="text-xl font-bold text-white mb-2">
-              Buat Soal Matematika SMP Sesuai Kurikulum Otomatis
-            </h3>
-            <p className="text-xs text-slate-400 max-w-2xl mb-6">
-              Masukkan materi atau indikator pembelajaran yang sedang dibahas di kelas. AI akan menghasilkan soal lengkap dengan opsi jawaban dan pembahasan terperinci.
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-              <div className="sm:col-span-2">
-                <label className="text-xs font-bold text-slate-300 block mb-1">
-                  Materi / Topik Pembelajaran
-                </label>
-                <input
-                  type="text"
-                  value={aiTopic}
-                  onChange={(e) => setAiTopic(e.target.value)}
-                  placeholder="Misal: Aritmetika Sosial Diskon dan Bunga, atau Teorema Pythagoras"
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white font-medium focus:border-purple-500"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-300 block mb-1">
-                  Jenjang Kelas SMP
-                </label>
-                <select
-                  value={aiGrade}
-                  onChange={(e) => setAiGrade(e.target.value as GradeLevel)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white"
-                >
-                  <option value="VII">Kelas VII (Mudah)</option>
-                  <option value="VIII">Kelas VIII (Menengah)</option>
-                  <option value="IX">Kelas IX (Sulit)</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between pt-2">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-400">Jumlah Soal:</span>
-                {[3, 5, 8].map((c) => (
-                  <button
-                    key={c}
-                    onClick={() => setAiCount(c)}
-                    className={`px-2.5 py-1 rounded text-xs font-mono font-bold border ${
-                      aiCount === c ? 'bg-purple-600 text-white border-purple-500' : 'bg-slate-950 text-slate-400 border-slate-800'
-                    }`}
-                  >
-                    {c}
-                  </button>
-                ))}
-              </div>
-
-              <button
-                disabled={isGeneratingAi}
-                onClick={handleRunAiGenerator}
-                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-400 hover:to-indigo-400 text-white font-bold text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg disabled:opacity-50 cursor-pointer"
-              >
-                <Sparkles className="w-4 h-4" />
-                {isGeneratingAi ? 'Sedang Membuat Soal...' : 'Generate Soal dengan AI'}
-              </button>
-            </div>
-          </div>
-
-          {aiMessage && (
-            <div
-              className={`p-4 rounded-xl border text-xs flex items-center gap-2 ${
-                aiMessage.type === 'success'
-                  ? 'bg-emerald-950/60 border-emerald-700 text-emerald-200'
-                  : 'bg-rose-950/60 border-rose-700 text-rose-200'
-              }`}
-            >
-              {aiMessage.type === 'success' ? <Check className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
-              <span>{aiMessage.text}</span>
-            </div>
-          )}
-
-          {/* AI Result Cards */}
-          {aiGeneratedList.length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-white">
-                  Preview Soal Hasil AI ({aiGeneratedList.length} Soal)
-                </span>
-                <button
-                  onClick={handleSaveAiQuestions}
-                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase"
-                >
-                  Simpan Semua ke Bank Soal
-                </button>
-              </div>
-
-              <div className="space-y-3">
-                {aiGeneratedList.map((q, idx) => (
-                  <div key={idx} className="p-4 rounded-xl bg-slate-900 border border-slate-700 space-y-2">
-                    <div className="text-xs font-bold text-amber-300">
-                      Soal #{idx + 1} · {q.topic} (Kelas {q.grade})
-                    </div>
-                    <div className="text-sm font-semibold text-white">{q.prompt}</div>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-                      {q.options.map((opt, oIdx) => (
-                        <div
-                          key={oIdx}
-                          className={`p-2 rounded border text-center ${
-                            oIdx === q.correctAnswerIndex
-                              ? 'bg-emerald-950 border-emerald-500 text-emerald-300 font-bold'
-                              : 'bg-slate-950 border-slate-800 text-slate-400'
-                          }`}
-                        >
-                          {opt}
-                        </div>
-                      ))}
-                    </div>
-                    <div className="text-[11px] text-slate-400 italic">💡 {q.explanation}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ================= TAB 3: MATCH HISTORY ================= */}
+      {/* ================= TAB 2: MATCH HISTORY ================= */}
       {activeTab === 'history' && (
         <div className="my-6 space-y-4">
           <div className="flex items-center justify-between p-4 rounded-xl bg-slate-900/80 border border-slate-800">

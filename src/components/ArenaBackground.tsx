@@ -16,7 +16,7 @@ export const ArenaBackground: React.FC<ArenaBackgroundProps> = ({
   const arena = ARENAS.find((a) => a.id === arenaId) || ARENAS[0];
 
   return (
-    <div className="relative w-full min-h-screen overflow-hidden bg-slate-950 flex flex-col justify-between">
+    <div className="relative w-full h-full min-h-[calc(100vh-65px)] overflow-hidden bg-slate-950 flex flex-col justify-between">
       {/* Background Image / Gradient Fallback */}
       {arena.bgImagePath ? (
         <div className="absolute inset-0 z-0">
